@@ -1,0 +1,13 @@
+include_directories(include ../include ../network/include ../scripting/include)
+
+set(SOURCES src/main)
+set(HEADERS ../include/microhelix_commons)
+
+source_group("Headers" FILES ${HEADERS})
+
+add_executable(microhelix ${SOURCES} ${HEADERS})
+target_link_libraries(microhelix network)
+target_link_libraries(microhelix scripting)
+target_link_libraries(microhelix ${Boost_LIBRARIES})
+target_link_libraries(microhelix ${OPENSSL_LIBRARIES})
+target_link_libraries(microhelix ${LUA_LIBRARY})
