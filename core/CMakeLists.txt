@@ -1,4 +1,4 @@
-include_directories(include ../include ../network/include ../scripting/include)
+include_directories(include ../include ../network/include ../scripting/include ../external)
 
 set(SOURCES src/main)
 set(HEADERS ../include/microhelix_commons)

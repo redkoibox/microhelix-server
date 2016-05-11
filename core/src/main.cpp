@@ -3,10 +3,11 @@
 
 #include "microhelix_commons.h"
 #include "network.h"
+#include "scripting.h"
 
 int main(int argc, char *argv[])
 {
-	NetworkManager::getInstance()->registerPath(NetworkManager::HTTP_METHOD::kGET, "^/info$",
+	/*NetworkManager::getInstance()->registerPath(NetworkManager::HTTP_METHOD::kGET, "^/info$",
 		[](NetworkManager::WebServer::Response& response, std::shared_ptr<NetworkManager::WebServer::Request> request)
 		{
 			std::stringstream content_stream;
@@ -23,6 +24,9 @@ int main(int argc, char *argv[])
 			response.flush();
 		}
 	);
+	NetworkManager::getInstance()->run();*/
+	ScriptingManager::getInstance()->init("scripts");
+
 	NetworkManager::getInstance()->run();
 	return 0;
 }

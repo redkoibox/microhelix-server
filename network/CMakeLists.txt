@@ -1,7 +1,7 @@
-include_directories(include ../include)
+include_directories(include ../include ../external)
 
 set(SOURCES src/network)
-set(HEADERS ../include/microhelix_commons include/network include/client_http include/client_https include/server_http include/server_https)
+set(HEADERS ../include/microhelix_commons include/network)
 
 source_group("Headers" FILES ${HEADERS})
 
