@@ -8,6 +8,7 @@ static const struct luaL_Reg helixlib_f[] =
 {
 	{ "success", Helix_success },
 	{ "error", Helix_error },
+	{ "script", Helix_script },
 	{ NULL, NULL }
 };
 
@@ -86,6 +87,63 @@ int Helix_error(lua_State *L)
 	}
 }
 
+int Helix_script(lua_State *L)
+{
+	if (lua_gettop(L) > 0 && lua_isstring(L, 1))
+	{
+		lua_pushvalue(L, 1);
+		return 1;
+	}
+	lua_pushnil(L);
+	return 1;
+}
+
+lua_State* Script::getStateForThread(const char* service, std::string const& helixScriptFile, NetworkManager::HTTP_METHOD method)
+{
+	std::lock_guard<std::mutex> lock(mutex);
+	std::stringstream ss;
+	ss << std::this_thread::get_id();
+	std::string key = service + helixScriptFile + "-" + NetworkManager::getMethodString(method) + ss.str();
+
+	auto it = states.find(key);
+	if (it == states.end())
+	{
+		std::string preloadKey = service + helixScriptFile + "-" + NetworkManager::getMethodString(method);
+		states[key] = preloadedScripts[preloadKey].back();
+		preloadedScripts[preloadKey].pop_back();
+		return states[key];
+	}
+	return it->second;
+}
+
+void Script::preloadScripts(int numThread, const char* service, std::string const& helixScriptFile, NetworkManager::HTTP_METHOD method)
+{
+	std::vector<lua_State*> loaded;
+	for (int i = 0; i < numThread; ++i)
+	{
+		lua_State *scriptL = luaL_newstate();
+		luaL_openlibs(scriptL);
+		if (luaL_loadfile(scriptL, ("./scripts/" + helixScriptFile + "/" + NetworkManager::getMethodString(method) + ".lua").c_str()) != LUA_OK)
+		{
+			printf("Error loading lua script: %s\n", luaL_checkstring(scriptL, -1));
+			lua_close(scriptL);
+			exit(1);
+		}
+		else
+		{
+			createDefaultScriptObjects(scriptL);
+			if (lua_pcall(scriptL, 0, 0, 0) != LUA_OK)
+			{
+				printf("Error executing script: %s\n", luaL_checkstring(scriptL, -1));
+				lua_close(scriptL);
+				exit(1);
+			}
+		}
+		loaded.push_back(scriptL);
+	}
+	preloadedScripts[service + helixScriptFile + "-" + NetworkManager::getMethodString(method)] = loaded;
+}
+
 Script::ptr Script::create(std::string const& scriptFile)
 {
 	return ptr(new Script(scriptFile));
@@ -106,7 +164,7 @@ Script::Script(const std::string& scriptFile)
 	if (luaL_loadfile(L, scriptFile.c_str()) != LUA_OK)
 		printf("Error loading lua script: %s\n", luaL_checkstring(L, -1));
 	else
-		createDefaultScriptObjects();
+		createDefaultScriptObjects(L);
 }
 
 void Script::execute()
@@ -132,8 +190,20 @@ void Script::execute()
 	}
 }
 
-void Script::createDefaultScriptObjects()
+void Script::createDefaultScriptObjects(lua_State *L)
 {
+	lua_getglobal(L, "package");
+#ifdef _WIN32
+	lua_pushstring(L, "./plugins/?.dll;./lua/?.dll;./?.dll");
+#else
+	lua_pushstring(L, "./plugins/?.so;./lua/?.so;./?.so");
+#endif // _WIN32
+	lua_setfield(L, -2, "cpath");
+
+	lua_pushstring(L, "./lua/?.lua;./?.lua;./scripts/?.lua");
+	lua_setfield(L, -2, "path");
+	lua_pop(L, 1);
+
 	lua_newtable(L);
 	
 	luaL_setfuncs(L, helixlib_f, 0);
@@ -194,71 +264,80 @@ void Script::registerMethod(const char* service, NetworkManager::HTTP_METHOD met
 	lua_pop(L, 1);
 
 	lua_getfield(L, -1, "onRequest");
-	if (lua_isfunction(L, -1))
+	if (lua_isstring(L, -1))
 	{
 		availableMethods.erase(method);
-		int refId = luaL_ref(L, LUA_REGISTRYINDEX);
 		std::string servicePath = service;
+		std::string helixScriptFile = luaL_checkstring(L, -1);;
+		lua_pop(L, 1);
+		preloadScripts(4, service, helixScriptFile, method);
 		NetworkManager::getInstance()->registerPath(method, service, 
-			[L = L, refId, consumes, produces, servicePath](NetworkManager::WebServer::Response& response, std::shared_ptr<NetworkManager::WebServer::Request> request)
+			[service = std::string(service), ptr = shared_from_this(), helixScriptFile, consumes, produces, servicePath, method](NetworkManager::WebServer::Response& response, std::shared_ptr<NetworkManager::WebServer::Request> request)
 			{
 				// DONE pass headers to function.
 				// DONE pass query parameters to function (passed via regex matches, is up to lua script to match and parse).
 				// DONE add support to json (consume).
-				lua_rawgeti(L, LUA_REGISTRYINDEX, refId);
+				lua_State *scriptL = ptr->getStateForThread(service.c_str(), helixScriptFile, method);
+				if (scriptL == NULL)
+				{
+					http_helpers::sendGenericError(response);
+					return;
+				}
 
+				// Load method function.
+				lua_getglobal(scriptL, "onRequest");
 				// Push headers in a table.
-				lua_newtable(L);
+				lua_newtable(scriptL);
 				for (auto& header : request->header)
 				{
-					lua_pushstring(L, header.second.c_str());
-					lua_setfield(L, -2, header.first.c_str());
+					lua_pushstring(scriptL, header.second.c_str());
+					lua_setfield(scriptL, -2, header.first.c_str());
 				}
 
 				// Push regex matches.
-				lua_newtable(L);
+				lua_newtable(scriptL);
 				for (int i = 1; i < request->path_match.size(); ++i)
 				{
-					lua_pushstring(L, request->path_match[i].str().c_str());
-					lua_seti(L, -2, i);
+					lua_pushstring(scriptL, request->path_match[i].str().c_str());
+					lua_seti(scriptL, -2, i);
 				}
 
 				if (consumes == http_helpers::SupportedMediaTypes::TEXT_PLAIN)
-					lua_pushstring(L, request->content.string().c_str());
+					lua_pushstring(scriptL, request->content.string().c_str());
 				else if (consumes == http_helpers::SupportedMediaTypes::JSON)
 				{
-					if (!http_helpers::jsonToLuaTable(L, request->content.string().c_str()))
+					if (!http_helpers::jsonToLuaTable(scriptL, request->content.string().c_str()))
 					{
 						http_helpers::sendResponse(response, 422, "Invalid json received.", http_helpers::SupportedMediaTypes::TEXT_PLAIN);
-						lua_pop(L, 1);
+						lua_pop(scriptL, 1);
 						return;
 					}
 				}
 				else
-					lua_pushnil(L);
+					lua_pushnil(scriptL);
 
-				if (lua_pcall(L, 3, 1, 0) == LUA_OK)
+				if (lua_pcall(scriptL, 3, 1, 0) == LUA_OK)
 				{
-					if (lua_istable(L, -1))
+					if (lua_istable(scriptL, -1))
 					{
-						lua_getfield(L, -1, "errorCode");
-						lua_Integer errorCode = lua_tointeger(L, -1);
-						lua_pop(L, 1);
+						lua_getfield(scriptL, -1, "errorCode");
+						lua_Integer errorCode = lua_tointeger(scriptL, -1);
+						lua_pop(scriptL, 1);
 
-						lua_getfield(L, -1, "content");
-						if (lua_isstring(L, -1) && produces == http_helpers::SupportedMediaTypes::TEXT_PLAIN)
+						lua_getfield(scriptL, -1, "content");
+						if (lua_isstring(scriptL, -1) && produces == http_helpers::SupportedMediaTypes::TEXT_PLAIN)
 						{
-							std::string str = lua_tostring(L, -1);
-							lua_pop(L, 1);
+							std::string str = lua_tostring(scriptL, -1);
+							lua_pop(scriptL, 1);
 							http_helpers::sendResponse(response, errorCode, str, produces);
 						}
-						else if (lua_istable(L, -1) && produces == http_helpers::SupportedMediaTypes::JSON)
+						else if (lua_istable(scriptL, -1) && produces == http_helpers::SupportedMediaTypes::JSON)
 						{
 							// DONE serialize table to json.
-							std::string json = http_helpers::luaTableToJson(L, -1);
+							std::string json = http_helpers::luaTableToJson(scriptL, -1);
 							http_helpers::sendResponse(response, errorCode, json, produces);
 						}
-						else if (lua_isnil(L, -1)) // In case of nil send empty response.
+						else if (lua_isnil(scriptL, -1)) // In case of nil send empty response.
 						{
 							http_helpers::sendResponse(response, errorCode, "", produces);
 						}
@@ -271,9 +350,9 @@ void Script::registerMethod(const char* service, NetworkManager::HTTP_METHOD met
 				else
 				{
 					http_helpers::sendGenericError(response);
-					printf("Error executing onRequest for path (%s): %s\n", servicePath.c_str(), luaL_checkstring(L, -1));
+					printf("Error executing onRequest for path (%s): %s\n", servicePath.c_str(), luaL_checkstring(scriptL, -1));
 				}
-				lua_pop(L, 1);
+				lua_pop(scriptL, 1);
 			}
 		);
 	}

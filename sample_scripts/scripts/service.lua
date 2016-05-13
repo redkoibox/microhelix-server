@@ -1,3 +1,5 @@
+local mongodb = require("libs/mongodb");
+
 services["^\\/string\\??(.*)$"] = 
 {
 	GET =
