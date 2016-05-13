@@ -228,6 +228,9 @@ void Script::createDefaultScriptObjects(lua_State *L)
 	lua_pushinteger(L, 503);
 	lua_setfield(L, -2, "SERVICE_NOT_AVAILABLE");
 
+	lua_pushinteger(L, 500);
+	lua_setfield(L, -2, "SERVER_ERROR");
+
 	lua_setfield(L, -2, "Errors");
 
 	lua_setglobal(L, "Helix");

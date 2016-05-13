@@ -1,19 +1,13 @@
 local mongodb = require("mongodb");
 
-_libmongo_mt = { pools = {} };
-_libmongo_mt.__index = wrapper;
+_libmongo_mt = {};
+_libmongo_mt.__index = _libmongo_mt;
 
 function create()
 	local wrapper = {};
 	
 	wrapper.new = function(uri)
-		local pool = _libmongo_mt.pools[uri];
-		if(pool == nil) then
-			pool = mongodb.newPool(uri);
-			_libmongo_mt.pools[uri] = pool;
-		end
-		
-		return setmetatable({ _pool = pool }, _libmongo_mt);
+		return setmetatable({ _pool = mongodb.newPool(uri) }, _libmongo_mt);
 	end
 	
 	wrapper.cleanup = function()
@@ -35,6 +29,15 @@ function _libmongo_mt:connect()
 		error("[MongoConnectionWrapper] Already connected!");
 	end
 	return self;
+end
+
+function _libmongo_mt:getCollection(dbName, collectionName)
+	if(self._conn ~= nil) then
+		return self._conn:getCollection(dbName, collectionName);
+	else
+		error("[MongoConnectionWrapper] Not connected!");
+	end
+	return nil;
 end
 
 --[[

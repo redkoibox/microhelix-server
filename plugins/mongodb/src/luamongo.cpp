@@ -1,5 +1,7 @@
 #include "luamongo.h"
 
+#include "json_utils.h"
+
 typedef struct mongo_c_userdata
 {
 	mongoc_client_t *client;
@@ -36,7 +38,11 @@ static const struct luaL_Reg mongodblib_conn_m[] =
 
 static const struct luaL_Reg mongodblib_collection_m[] =
 {
-	{ "close", mongodb_client_close_collection },
+	{ "close", mongodb_collection_close },
+	{ "insert", mongodb_collection_insert },
+	{ "find", mongodb_collection_find },
+	{ "delete", mongodb_collection_delete },
+	{ "update", mongodb_collection_update },
 	{ NULL, NULL }
 };
 
@@ -155,7 +161,7 @@ int mongodb_client_get_collection(lua_State *L)
 	return 0;
 }
 
-int mongodb_client_close_collection(lua_State *L)
+int mongodb_collection_close(lua_State *L)
 {
 	if (lua_gettop(L) >= 1)
 	{
@@ -166,6 +172,154 @@ int mongodb_client_close_collection(lua_State *L)
 	}
 	else
 		luaL_error(L, "MongoDB-collection close(collection) expects 1 parameter (collection).");
+	return 0;
+}
+
+// Table is expected at stack top.
+bson_t *createBSONFromLuaTable(lua_State *L, int index = -1)
+{
+	std::string json = json_utils::luaTableToJson(L, index);
+	bson_error_t error;
+	bson_t *document = bson_new_from_json((const uint8_t *)json.c_str(), -1, &error);
+	return document;
+}
+
+int mongodb_collection_insert(lua_State *L)
+{
+	if (lua_gettop(L) >= 2)
+	{
+		lp_mongo_c_collection_userdata ptr = checkmongocollection(L);
+		bson_t* document = createBSONFromLuaTable(L);
+		if (document != NULL)
+		{
+			bson_error_t error;
+			if (!mongoc_collection_insert(ptr->coll, MONGOC_INSERT_NONE, document, NULL, &error))
+			{
+				fprintf(stderr, "%s\n", error.message);
+				lua_pushboolean(L, 0);
+				lua_pushstring(L, error.message);
+				return 2;
+			}
+			bson_destroy(document);
+			lua_pushboolean(L, 1);
+			return 1;
+		}
+		else
+		{
+			lua_pushboolean(L, 0);
+			lua_pushstring(L, "Invalid BSON object (maybe oid is not in correct form?).");
+			return 2;
+		}
+	}
+	else
+		luaL_error(L, "MongoDB-collection insert(collection, document) expects 2 parameter (collection, document).");
+	return 0;
+}
+
+int mongodb_collection_find(lua_State *L)
+{
+	if (lua_gettop(L) >= 2)
+	{
+		lp_mongo_c_collection_userdata ptr = checkmongocollection(L);
+		bson_t* query = createBSONFromLuaTable(L);
+		if (query != NULL)
+		{
+			mongoc_cursor_t *cursor;
+			const bson_t *doc;
+			char *str;
+			lua_Integer idx = 1;
+			cursor = mongoc_collection_find(ptr->coll, MONGOC_QUERY_NONE, 0, 0, 0, query, NULL, NULL);
+			lua_newtable(L);
+			while (mongoc_cursor_next(cursor, &doc))
+			{
+				str = bson_as_json(doc, NULL);
+				json_utils::jsonToLuaTable(L, str);
+				lua_seti(L, -2, idx++);
+				bson_free(str);
+			}
+			bson_destroy(query);
+			mongoc_cursor_destroy(cursor);
+			return 1;
+		}
+		else
+		{
+			lua_pushnil(L);
+			lua_pushstring(L, "Invalid BSON object (maybe oid is not in correct form?).");
+			return 2;
+		}
+	}
+	else
+		luaL_error(L, "MongoDB-collection find(collection, document) expects 2 parameter (collection, document).");
+	return 0;
+}
+
+int mongodb_collection_delete(lua_State *L)
+{
+	if (lua_gettop(L) >= 2)
+	{
+		lp_mongo_c_collection_userdata ptr = checkmongocollection(L);
+		bson_error_t error;
+		bson_t* query = createBSONFromLuaTable(L);
+		if (query != NULL)
+		{
+			if (!mongoc_collection_remove(ptr->coll, MONGOC_REMOVE_SINGLE_REMOVE, query, NULL, &error))
+			{
+				fprintf(stderr, "Delete failed: %s\n", error.message);
+				lua_pushboolean(L, 0);
+				lua_pushstring(L, error.message);
+				return 2;
+			}
+		}
+		else
+		{
+			lua_pushboolean(L, 0);
+			lua_pushstring(L, "Invalid BSON object (maybe oid is not in correct form?)."); 
+			return 2;
+		}
+		bson_destroy(query);
+		lua_pushboolean(L, 1);
+		return 1;
+	}
+	else
+		luaL_error(L, "MongoDB-collection delete(collection, document) expects 2 parameter (collection, document).");
+	return 0;
+}
+
+int mongodb_collection_update(lua_State *L)
+{
+	if (lua_gettop(L) >= 2)
+	{
+		if (lua_gettop(L) >= 3)
+		{
+
+		}
+		lp_mongo_c_collection_userdata ptr = checkmongocollection(L);
+		bson_error_t error;
+		bson_t* query = createBSONFromLuaTable(L, 2);
+		bson_t* update = createBSONFromLuaTable(L, 3);
+		if (query != NULL && update != NULL)
+		{
+			if (!mongoc_collection_update(ptr->coll, MONGOC_UPDATE_NONE, query, update, NULL, &error))
+			{
+				fprintf(stderr, "Update failed: %s\n", error.message);
+				lua_pushboolean(L, 0);
+				lua_pushstring(L, error.message);
+				return 2;
+			}
+		}
+		else
+		{
+			lua_pushboolean(L, 0);
+			lua_pushstring(L, "Invalid BSON object (maybe oid is not in correct form?).");
+			return 2;
+		}
+		bson_destroy(query);
+		bson_destroy(update);
+		lua_pushboolean(L, 1);
+		return 1;
+	}
+	else
+		luaL_error(L, "MongoDB-collection update(collection, document, update) expects 3 parameter (collection, document, update).");
 	return 0;
 }
 
