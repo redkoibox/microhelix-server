@@ -6,8 +6,12 @@ if (MSVC)
 	add_definitions(-DBOOST_ALL_NO_LIB)
 endif(MSVC)
 
+if(CMAKE_COMPILER_IS_GNUCC)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O3 -Wall")
+endif(CMAKE_COMPILER_IS_GNUCC)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 if (MSVC)
 	set(BOOST_LIBRARYDIR "$ENV{BOOST_ROOT}\\stage\\lib")
