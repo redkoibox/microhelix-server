@@ -176,7 +176,8 @@ void serializeTable(rapidjson::Writer<rapidjson::StringBuffer>& writer, lua_Stat
 std::string http_helpers::luaTableToJson(lua_State* L, int index)
 {
 	rapidjson::StringBuffer sb;
-	serializeTable(rapidjson::Writer<rapidjson::StringBuffer>(sb), L);
+	rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
+	serializeTable(writer, L);
 	return sb.GetString();
 }
 

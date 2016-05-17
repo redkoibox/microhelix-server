@@ -196,7 +196,7 @@ void Script::createDefaultScriptObjects(lua_State *L)
 #ifdef _WIN32
 	lua_pushstring(L, "./plugins/?.dll;./lua/?.dll;./?.dll");
 #else
-	lua_pushstring(L, "./plugins/?.so;./lua/?.so;./?.so");
+	lua_pushstring(L, "./plugins/lib?.so;./lua/lib?.so;./lib?.so");
 #endif // _WIN32
 	lua_setfield(L, -2, "cpath");
 

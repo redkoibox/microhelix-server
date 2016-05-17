@@ -34,7 +34,7 @@
 # Always search for non-versioned lua first (recommended)
 SET(_POSSIBLE_LUA_INCLUDE include include/lua)
 SET(_POSSIBLE_LUA_EXECUTABLE lua)
-SET(_POSSIBLE_LUA_LIBRARY liblua)
+SET(_POSSIBLE_LUA_LIBRARY liblua lua)
 
 # Determine possible naming suffixes (there is no standard for this)
 IF(Lua_FIND_VERSION_MAJOR AND Lua_FIND_VERSION_MINOR)
