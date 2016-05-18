@@ -7,6 +7,7 @@ if (MSVC)
 endif(MSVC)
 
 if(CMAKE_COMPILER_IS_GNUCC)
+	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/microhelix/libs")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O3 -Wall")
 endif(CMAKE_COMPILER_IS_GNUCC)
 
@@ -34,3 +35,8 @@ add_subdirectory(network)
 add_subdirectory(scripting)
 add_subdirectory(core)
 add_subdirectory(plugins)
+
+if(UNIX)
+	install(DIRECTORY prebuilt/linux-64/libs DESTINATION microhelix
+        	FILES_MATCHING PATTERN *.so.*)
+endif(UNIX)
