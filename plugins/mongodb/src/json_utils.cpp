@@ -111,6 +111,7 @@ bool json_utils::jsonToLuaTable(lua_State *L, const char* json)
 std::string json_utils::luaTableToJson(lua_State* L, int index)
 {
 	rapidjson::StringBuffer sb;
-	serializeTable(rapidjson::Writer<rapidjson::StringBuffer>(sb), L, index);
+	rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
+	serializeTable(writer, L, index);
 	return sb.GetString();
 }

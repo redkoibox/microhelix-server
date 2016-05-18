@@ -299,7 +299,7 @@ void Script::registerMethod(const char* service, NetworkManager::HTTP_METHOD met
 
 				// Push regex matches.
 				lua_newtable(scriptL);
-				for (int i = 1; i < request->path_match.size(); ++i)
+				for (size_t i = 1; i < request->path_match.size(); ++i)
 				{
 					lua_pushstring(scriptL, request->path_match[i].str().c_str());
 					lua_seti(scriptL, -2, i);
