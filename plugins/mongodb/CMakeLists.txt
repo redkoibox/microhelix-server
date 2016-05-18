@@ -22,3 +22,7 @@ add_library(mongodb SHARED ${SOURCES} ${HEADERS} ${RAPIDJSON})
 target_link_libraries(mongodb ${LIBMONGOC_LIBRARIES})
 target_link_libraries(mongodb ${LIBBSON_LIBRARIES})
 target_link_libraries(mongodb ${LUA_LIBRARY})
+
+set_property(TARGET mongodb PROPERTY INSTALL_RPATH_USE_LINK_PATH TRUE)
+install(TARGETS mongodb
+        LIBRARY DESTINATION microhelix/plugins)
