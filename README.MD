@@ -44,7 +44,7 @@ and shows how to implement a set of simple CRUD operations.
 
 Micro~Helix includes the following header-only libraries (in the extra directory):
 
-[Simple-Web-Server](https://github.com/eidheim/Simple-Web-Server) - A boost::asio backed implementation of a fast and asynchronous web server and client in C++.
+[Simple-Web-Server](https://github.com/eidheim/Simple-Web-Server) - A boost::asio backed implementation of a fast and asynchronous web server and client in C++.  
 [RapidJSON](https://github.com/miloyip/rapidjson) - A simple and fast json library.
 
 ## LICENSE
