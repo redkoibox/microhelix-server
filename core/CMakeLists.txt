@@ -1,7 +1,7 @@
 include_directories(include ../include ../network/include ../scripting/include ../external)
 
-set(SOURCES src/main)
-set(HEADERS ../include/microhelix_commons)
+set(SOURCES src/main src/config_manager)
+set(HEADERS ../include/microhelix_commons include/config_manager)
 
 source_group("Headers" FILES ${HEADERS})
 
@@ -18,3 +18,5 @@ endif(CMAKE_COMPILER_IS_GNUCC)
 set_property(TARGET microhelix PROPERTY INSTALL_RPATH_USE_LINK_PATH TRUE)
 install(TARGETS microhelix
         RUNTIME DESTINATION microhelix/bin)
+install(DIRECTORY config DESTINATION microhelix
+        FILES_MATCHING PATTERN *.ini)

@@ -4,18 +4,16 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <boost/serialization/singleton.hpp>
 
 class Script;
 
 class ScriptingManager
+	: public boost::serialization::singleton<ScriptingManager>
 {
 public:
-	static ScriptingManager *getInstance();
 	void init(const std::string& scriptDirectory);
 private:
-	ScriptingManager() = default;
-private:
-	static std::unique_ptr<ScriptingManager> instance;
 	std::map<std::string, std::shared_ptr<Script>> loadedScripts;
 };
 

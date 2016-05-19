@@ -274,7 +274,7 @@ void Script::registerMethod(const char* service, NetworkManager::HTTP_METHOD met
 		std::string helixScriptFile = luaL_checkstring(L, -1);;
 		lua_pop(L, 1);
 		preloadScripts(4, service, helixScriptFile, method);
-		NetworkManager::getInstance()->registerPath(method, service, 
+		NetworkManager::get_mutable_instance().registerPath(method, service, 
 			[service = std::string(service), ptr = shared_from_this(), helixScriptFile, consumes, produces, servicePath, method](NetworkManager::WebServer::Response& response, std::shared_ptr<NetworkManager::WebServer::Request> request)
 			{
 				// DONE pass headers to function.
@@ -299,7 +299,7 @@ void Script::registerMethod(const char* service, NetworkManager::HTTP_METHOD met
 
 				// Push regex matches.
 				lua_newtable(scriptL);
-				for (size_t i = 1; i < request->path_match.size(); ++i)
+				for (int i = 1; i < request->path_match.size(); ++i)
 				{
 					lua_pushstring(scriptL, request->path_match[i].str().c_str());
 					lua_seti(scriptL, -2, i);

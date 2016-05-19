@@ -24,5 +24,11 @@ target_link_libraries(mongodb ${LIBBSON_LIBRARIES})
 target_link_libraries(mongodb ${LUA_LIBRARY})
 
 set_property(TARGET mongodb PROPERTY INSTALL_RPATH_USE_LINK_PATH TRUE)
-install(TARGETS mongodb
-        LIBRARY DESTINATION microhelix/plugins)
+if(UNIX)
+	install(TARGETS mongodb
+			LIBRARY DESTINATION microhelix/plugins)
+else()
+	install(TARGETS mongodb
+			LIBRARY DESTINATION microhelix/plugins
+			RUNTIME DESTINATION microhelix/plugins)
+endif(UNIX)

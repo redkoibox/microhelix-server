@@ -94,7 +94,7 @@ static std::map<lua_Integer, std::string> errorCodeToDescription{
 void http_helpers::sendGenericError(NetworkManager::WebServer::Response& response)
 {
 	response << httpProtocolAndVersion << errorCodeToDescription[500];
-	response << "X-Powered-By: micro-helix/0.1\r\n";;
+	response << "X-Powered-By: micro-helix/0.1\r\n";
 	response << "Content-Length: 0\r\n\r\n";
 	response.flush();
 }

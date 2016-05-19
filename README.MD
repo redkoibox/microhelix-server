@@ -23,6 +23,8 @@ CMAKE_PREFIX_PATH
 	|__microhelix
 		|__bin
 		|__|__microhelix
+		|__config
+		|__|__config.ini
 		|__lua
 		|  |__libs
 		|__scripts
