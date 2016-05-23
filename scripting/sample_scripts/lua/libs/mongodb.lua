@@ -10,6 +10,10 @@ function create()
 		return setmetatable({ _pool = mongodb.newPool(uri) }, _libmongo_mt);
 	end
 	
+	wrapper.randomUUID = function()
+		return mongodb.randomUUID();
+	end
+	
 	wrapper.cleanup = function()
 		-- TODO add manual clean-up (in c module).
 		--[[

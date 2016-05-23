@@ -1,5 +1,6 @@
 #include "luamongo.h"
 
+#include <boost/uuid/uuid_io.hpp>
 #include "json_utils.h"
 
 typedef struct mongo_c_userdata
@@ -49,6 +50,7 @@ static const struct luaL_Reg mongodblib_collection_m[] =
 static const struct luaL_Reg mongodblib_f[] =
 {
 	{ "newPool", mongodb_newpool },
+	{ "randomUUID", mongodb_generate_uuid },
 	{ NULL, NULL }
 };
 
@@ -93,7 +95,7 @@ int mongodb_newpool(lua_State *L)
 	{
 		lp_mongo_c_pool_userdata ptr = (lp_mongo_c_pool_userdata)lua_newuserdata(L, sizeof(mongo_c_pool_userdata));
 		luaL_setmetatable(L, "microhelix.mongodb_pool");
-		const MongoPoolData& data = MongoPoolManager::getInstance()->getPoolForUri(luaL_checkstring(L, 1));
+		const MongoPoolData& data = MongoPoolManager::get_mutable_instance().getPoolForUri(luaL_checkstring(L, 1));
 		ptr->uri = data.uri;
 		ptr->pool = data.pool;
 		return 1;
@@ -108,7 +110,7 @@ int mongodb_destroypool(lua_State *L)
 	lp_mongo_c_pool_userdata ptr = checkmongopool(L);
 	if (ptr != NULL)
 	{
-		MongoPoolManager::getInstance()->releasePool(ptr->uri);
+		MongoPoolManager::get_mutable_instance().releasePool(ptr->uri);
 		ptr->pool = NULL;
 		ptr->uri = NULL;
 	}
@@ -326,11 +328,10 @@ int mongodb_collection_update(lua_State *L)
 	return 0;
 }
 
-std::unique_ptr<MongoPoolManager> MongoPoolManager::instance(new MongoPoolManager());
-
-MongoPoolManager* MongoPoolManager::getInstance()
+int mongodb_generate_uuid(lua_State *L)
 {
-	return instance.get();
+	lua_pushstring(L, MongoPoolManager::get_mutable_instance().generateRandomUUID().c_str());
+	return 1;
 }
 
 MongoPoolData const& MongoPoolManager::getPoolForUri(const char *uri)
@@ -361,4 +362,9 @@ void MongoPoolManager::releasePool(mongoc_uri_t *uri)
 			mongoc_uri_destroy(it->second.uri);
 		}
 	}
+}
+
+std::string MongoPoolManager::generateRandomUUID()
+{
+	return boost::uuids::to_string(randomUUIDGenerator());
 }

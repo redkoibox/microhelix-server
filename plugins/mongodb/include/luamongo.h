@@ -9,6 +9,10 @@
 #include <mutex>
 #include <memory>
 #include <string>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/random_generator.hpp>
+#include <boost/random.hpp>
+#include <boost/serialization/singleton.hpp>
 
 #include "microhelix_commons.h"
 
@@ -22,6 +26,7 @@ int mongodb_collection_insert(lua_State *L);
 int mongodb_collection_find(lua_State *L);
 int mongodb_collection_delete(lua_State *L);
 int mongodb_collection_update(lua_State *L);
+int mongodb_generate_uuid(lua_State *L);
 
 typedef struct MongoPoolData
 {
@@ -46,15 +51,16 @@ typedef struct MongoPoolData
 } MongoPoolData;
 
 class MongoPoolManager
+	: public boost::serialization::singleton<MongoPoolManager>
 {
 public:
-	static MongoPoolManager* getInstance();
 	MongoPoolData const& getPoolForUri(const char* uri);
 	void releasePool(mongoc_uri_t *uri);
+	std::string generateRandomUUID();
 private:
-	static std::unique_ptr<MongoPoolManager> instance;
 	std::mutex mutex;
 	std::map<std::string, MongoPoolData> pools;
+	boost::uuids::random_generator randomUUIDGenerator;
 };
 
 #endif
