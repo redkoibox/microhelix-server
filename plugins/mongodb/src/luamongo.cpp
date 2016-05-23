@@ -202,7 +202,10 @@ int mongodb_collection_insert(lua_State *L)
 			}
 			bson_destroy(document);
 			lua_pushboolean(L, 1);
-			return 1;
+			char * str = bson_as_json(mongoc_collection_get_last_error(ptr->coll), NULL);
+			json_utils::jsonToLuaTable(L, str);
+			bson_free(str);
+			return 2;
 		}
 		else
 		{
