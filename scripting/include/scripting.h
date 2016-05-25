@@ -12,7 +12,7 @@ class ScriptingManager
 	: public boost::serialization::singleton<ScriptingManager>
 {
 public:
-	void init(const std::string& scriptDirectory);
+	void init(size_t numThread, const std::string& scriptDirectory);
 private:
 	std::map<std::string, std::shared_ptr<Script>> loadedScripts;
 };

@@ -23,9 +23,9 @@ class Script
 public:
 	using ptr = std::shared_ptr<Script>;
 
-	static ptr create(std::string const& scriptFile);
+	static ptr create(size_t numThread, std::string const& scriptFile);
 private:
-	Script(const std::string& scriptFile);
+	Script(size_t numThread, const std::string& scriptFile);
 public:
 	void execute();
 	lua_State* getStateForThread(const char* service, std::string const& helixScriptFile, NetworkManager::HTTP_METHOD method);
@@ -33,8 +33,9 @@ private:
 	void registerNetworkFunctionsInService(const char* service);
 	void registerMethod(const char* service, NetworkManager::HTTP_METHOD method);
 	void createDefaultScriptObjects(lua_State *L);
-	void preloadScripts(int numThread, const char* service, std::string const& helixScriptFile, NetworkManager::HTTP_METHOD method);
+	void preloadScripts(size_t numThread, const char* service, std::string const& helixScriptFile, NetworkManager::HTTP_METHOD method);
 private:
+	size_t numThreads;
 	std::set<NetworkManager::HTTP_METHOD> availableMethods;
 	lua_State *L;
 	std::mutex mutex;

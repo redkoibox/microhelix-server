@@ -116,7 +116,7 @@ lua_State* Script::getStateForThread(const char* service, std::string const& hel
 	return it->second;
 }
 
-void Script::preloadScripts(int numThread, const char* service, std::string const& helixScriptFile, NetworkManager::HTTP_METHOD method)
+void Script::preloadScripts(size_t numThread, const char* service, std::string const& helixScriptFile, NetworkManager::HTTP_METHOD method)
 {
 	std::vector<lua_State*> loaded;
 	for (int i = 0; i < numThread; ++i)
@@ -144,12 +144,13 @@ void Script::preloadScripts(int numThread, const char* service, std::string cons
 	preloadedScripts[service + helixScriptFile + "-" + NetworkManager::getMethodString(method)] = loaded;
 }
 
-Script::ptr Script::create(std::string const& scriptFile)
+Script::ptr Script::create(size_t numThread, std::string const& scriptFile)
 {
-	return ptr(new Script(scriptFile));
+	return ptr(new Script(numThread, scriptFile));
 }
 
-Script::Script(const std::string& scriptFile)
+Script::Script(size_t numThread, const std::string& scriptFile)
+	: numThreads(numThread)
 {
 	availableMethods = { 
 		NetworkManager::HTTP_METHOD::kDELETE,
@@ -250,7 +251,6 @@ void Script::registerNetworkFunctionsInService(const char* service)
 		}
 		lua_pop(L, 1);
 	}
-	// TODO register remaining available method on service to send a Not Implemented error.
 }
 
 void Script::registerMethod(const char* service, NetworkManager::HTTP_METHOD method)
@@ -273,7 +273,7 @@ void Script::registerMethod(const char* service, NetworkManager::HTTP_METHOD met
 		std::string servicePath = service;
 		std::string helixScriptFile = luaL_checkstring(L, -1);;
 		lua_pop(L, 1);
-		preloadScripts(4, service, helixScriptFile, method);
+		preloadScripts(numThreads, service, helixScriptFile, method);
 		NetworkManager::get_mutable_instance().registerPath(method, service, 
 			[service = std::string(service), ptr = shared_from_this(), helixScriptFile, consumes, produces, servicePath, method](NetworkManager::WebServer::Response& response, std::shared_ptr<NetworkManager::WebServer::Request> request)
 			{
