@@ -321,7 +321,10 @@ int mongodb_collection_update(lua_State *L)
 		bson_destroy(query);
 		bson_destroy(update);
 		lua_pushboolean(L, 1);
-		return 1;
+		char * str = bson_as_json(mongoc_collection_get_last_error(ptr->coll), NULL);
+		json_utils::jsonToLuaTable(L, str);
+		bson_free(str);
+		return 2;
 	}
 	else
 		luaL_error(L, "MongoDB-collection update(collection, document, update) expects 3 parameter (collection, document, update).");

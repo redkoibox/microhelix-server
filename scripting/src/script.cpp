@@ -301,7 +301,10 @@ void Script::registerMethod(const char* service, NetworkManager::HTTP_METHOD met
 				lua_newtable(scriptL);
 				for (int i = 1; i < request->path_match.size(); ++i)
 				{
-					lua_pushstring(scriptL, request->path_match[i].str().c_str());
+					if (request->path_match[i].str().empty())
+						lua_pushnil(scriptL);
+					else
+						lua_pushstring(scriptL, request->path_match[i].str().c_str());
 					lua_seti(scriptL, -2, i);
 				}
 

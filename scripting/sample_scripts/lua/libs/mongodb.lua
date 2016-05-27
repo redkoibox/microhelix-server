@@ -14,6 +14,18 @@ function create()
 		return mongodb.randomUUID();
 	end
 	
+	wrapper.withConnection = function(conn, func)
+		local results = { func() };
+		conn:disconnect();
+		return table.unpack(results);
+	end
+	
+	wrapper.withCollection = function(coll, func)
+		local results = { func() };
+		coll:close();
+		return table.unpack(results);
+	end
+	
 	wrapper.cleanup = function()
 		-- TODO add manual clean-up (in c module).
 		--[[
