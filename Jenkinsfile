@@ -23,7 +23,7 @@ node('docker') {
 	sh '''
 		ME_VERSION=$(cat version.txt)
 		cd docker
-		chmod +x launch_microhelix.sh
+		chmod +x launch-microhelix.sh
 		rm -f microhelix-latest.tar.gz
 		wget http://jenkins.iseocom.it:8081/microhelix/archive/microhelix-$ME_VERSION.tar.gz
 		mv microhelix-$ME_VERSION.tar.gz microhelix-latest.tar.gz
