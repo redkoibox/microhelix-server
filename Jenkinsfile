@@ -24,6 +24,9 @@ node('docker') {
 		ME_VERSION=$(cat version.txt)
 		cd docker
 		chmod +x launch_microhelix.sh
+		rm -f microhelix-latest.tar.gz
+		wget http://jenkins.iseocom.it:8081/microhelix/archive/microhelix-$ME_VERSION.tar.gz
+		mv microhelix-$ME_VERSION.tar.gz microhelix-latest.tar.gz
 		docker build --tag docker-repo.iseocom.it:5000/microhelix:$ME_VERSION .
 		docker tag docker-repo.iseocom.it:5000/microhelix:$ME_VERSION docker-repo.iseocom.it:5000/microhelix:latest
 		docker push docker-repo.iseocom.it:5000/microhelix:$ME_VERSION
