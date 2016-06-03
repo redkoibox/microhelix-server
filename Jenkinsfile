@@ -10,6 +10,6 @@ node('cmake') {
 	sh '''
 		mkdir -p build
 		cd build
-		LUA_DIR=/usr/local cmake -G "Unix Makefiles" -DLIBBSON_DIR=/usr/local -DLIBMONGOC_DIR=/usr/local -DCMAKE_INSTALL_PREFIX=/var/lib/builds/microhelix/tmp -DMICROHELIX_INSTALL_DIR=/usr/local ../'
+		LUA_DIR=/usr/local cmake -G "Unix Makefiles" -DLIBBSON_DIR=/usr/local -DLIBMONGOC_DIR=/usr/local -DCMAKE_INSTALL_PREFIX=/var/lib/builds/microhelix/tmp -DMICROHELIX_INSTALL_DIR=/usr/local ../
 	'''
 }
