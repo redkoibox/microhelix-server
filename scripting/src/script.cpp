@@ -12,6 +12,26 @@ static const struct luaL_Reg helixlib_f[] =
 	{ NULL, NULL }
 };
 
+static int traceback(lua_State *L)
+{
+	if (!lua_isstring(L, 1))  /* 'message' not a string? */
+		return 1;  /* keep it intact */
+	lua_getglobal(L, "debug");
+	if (!lua_istable(L, -1)) {
+		lua_pop(L, 1);
+		return 1;
+	}
+	lua_getfield(L, -1, "traceback");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, 2);
+		return 1;
+	}
+	lua_pushvalue(L, 1);  /* pass error message */
+	lua_pushinteger(L, 2);  /* skip this function and traceback */
+	lua_call(L, 2, 1);  /* call debug.traceback */
+	return 1;
+}
+
 int Helix_success(lua_State *L)
 {
 	if(lua_gettop(L) >= 1)
@@ -253,6 +273,23 @@ void Script::registerNetworkFunctionsInService(const char* service)
 	}
 }
 
+// @see http://stackoverflow.com/questions/30021904/lua-set-default-error-handler
+int lua_mypcall(lua_State* L, int nargs, int nret) {
+	/* calculate stack position for message handler */
+	int hpos = lua_gettop(L) - nargs;
+	int ret = 0;
+	/* push custom error message handler */
+	lua_pushcfunction(L, traceback);
+	/* move it before function and arguments */
+	lua_insert(L, hpos);
+	/* call lua_pcall function with custom handler */
+	ret = lua_pcall(L, nargs, nret, hpos);
+	/* remove custom error message handler from stack */
+	lua_remove(L, hpos);
+	/* pass return value of lua_pcall */
+	return ret;
+}
+
 void Script::registerMethod(const char* service, NetworkManager::HTTP_METHOD method)
 {
 	http_helpers::SupportedMediaTypes consumes = http_helpers::SupportedMediaTypes::NONE, produces = http_helpers::SupportedMediaTypes::NONE;
@@ -271,7 +308,7 @@ void Script::registerMethod(const char* service, NetworkManager::HTTP_METHOD met
 	{
 		availableMethods.erase(method);
 		std::string servicePath = service;
-		std::string helixScriptFile = luaL_checkstring(L, -1);;
+		std::string helixScriptFile = luaL_checkstring(L, -1);
 		lua_pop(L, 1);
 		preloadScripts(numThreads, service, helixScriptFile, method);
 		NetworkManager::get_mutable_instance().registerPath(method, service, 
@@ -286,6 +323,8 @@ void Script::registerMethod(const char* service, NetworkManager::HTTP_METHOD met
 					http_helpers::sendGenericError(response);
 					return;
 				}
+
+				//lua_pushcfunction(scriptL, traceback);
 
 				// Load method function.
 				lua_getglobal(scriptL, "onRequest");
@@ -322,7 +361,7 @@ void Script::registerMethod(const char* service, NetworkManager::HTTP_METHOD met
 				else
 					lua_pushnil(scriptL);
 
-				if (lua_pcall(scriptL, 3, 1, 0) == LUA_OK)
+				if (lua_mypcall(scriptL, 3, 1) == LUA_OK)
 				{
 					if (lua_istable(scriptL, -1))
 					{

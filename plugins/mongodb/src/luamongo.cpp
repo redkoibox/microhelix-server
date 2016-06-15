@@ -44,6 +44,7 @@ static const struct luaL_Reg mongodblib_collection_m[] =
 	{ "find", mongodb_collection_find },
 	{ "delete", mongodb_collection_delete },
 	{ "update", mongodb_collection_update },
+	{ "aggregate", mongodb_collection_aggregate },
 	{ NULL, NULL }
 };
 
@@ -255,6 +256,43 @@ int mongodb_collection_find(lua_State *L)
 	}
 	else
 		luaL_error(L, "MongoDB-collection find(collection, document) expects 2 parameter (collection, document).");
+	return 0;
+}
+
+int mongodb_collection_aggregate(lua_State *L)
+{
+	if (lua_gettop(L) >= 2)
+	{
+		lp_mongo_c_collection_userdata ptr = checkmongocollection(L);
+		bson_t* pipeline = createBSONFromLuaTable(L);
+		if (pipeline != NULL)
+		{
+			mongoc_cursor_t *cursor;
+			const bson_t *doc;
+			char *str;
+			lua_Integer idx = 1;
+			cursor = mongoc_collection_aggregate(ptr->coll, MONGOC_QUERY_NONE, pipeline, NULL, NULL);
+			lua_newtable(L);
+			while (mongoc_cursor_next(cursor, &doc))
+			{
+				str = bson_as_json(doc, NULL);
+				json_utils::jsonToLuaTable(L, str);
+				lua_seti(L, -2, idx++);
+				bson_free(str);
+			}
+			bson_destroy(pipeline);
+			mongoc_cursor_destroy(cursor);
+			return 1;
+		}
+		else
+		{
+			lua_pushnil(L);
+			lua_pushstring(L, "Invalid BSON object (maybe oid is not in correct form?).");
+			return 2;
+		}
+	}
+	else
+		luaL_error(L, "MongoDB-collection aggregate(collection, pipeline) expects 2 parameter (collection, pipeline).");
 	return 0;
 }
 

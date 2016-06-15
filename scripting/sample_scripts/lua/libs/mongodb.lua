@@ -15,15 +15,47 @@ function create()
 	end
 	
 	wrapper.withConnection = function(conn, func)
-		local results = { func() };
+		local succes, results = pcall(
+			function ()
+				return { func(conn) };
+			end
+		);
 		conn:disconnect();
-		return table.unpack(results);
+		if(succes) then
+			return table.unpack(results);
+		else
+			error(results);
+		end
 	end
 	
 	wrapper.withCollection = function(coll, func)
-		local results = { func() };
+		local succes, results = pcall(
+			function ()
+				return { func(coll) };
+			end
+		);
 		coll:close();
-		return table.unpack(results);
+		if(succes) then
+			return table.unpack(results);
+		else
+			error(results);
+		end
+	end
+
+	wrapper.withCollections = function(coll, func)
+		local succes, results = pcall(
+			function ()
+				return { func(coll) };
+			end
+		);
+		for _,v in pairs(coll) do
+			v:close();
+		end
+		if(succes) then
+			return table.unpack(results);
+		else
+			error(results);
+		end
 	end
 	
 	wrapper.cleanup = function()
