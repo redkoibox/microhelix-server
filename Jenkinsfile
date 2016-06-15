@@ -10,6 +10,7 @@ node('cmake') {
 		mkdir -p build
 		cd build
 		LUA_DIR=/usr/local cmake -G "Unix Makefiles" -DLIBBSON_DIR=/usr/local -DLIBMONGOC_DIR=/usr/local -DCMAKE_INSTALL_PREFIX=/var/lib/builds/microhelix/tmp -DMICROHELIX_INSTALL_DIR=/usr/local ../
+		make install
 		mkdir -p /var/lib/builds/microhelix/archive
 		cd /var/lib/builds/microhelix/tmp
 		tar czvf /var/lib/builds/microhelix/archive/microhelix-$ME_VERSION.tar.gz ./*
