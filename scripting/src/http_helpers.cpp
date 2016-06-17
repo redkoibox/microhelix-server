@@ -125,9 +125,11 @@ void http_helpers::sendResponse(NetworkManager::WebServer::Response& response, l
 
 bool isTableArray(lua_State *L)
 {
-	if (luaL_len(L, -1) == 0)
+	lua_pushnil(L);
+	if(lua_next(L, -2) == 0)
 		return true;
-	
+	lua_pop(L, 2);
+
 	bool isArray = false;
 	lua_geti(L, -1, 1);
 	if (!lua_isnil(L, -1))
