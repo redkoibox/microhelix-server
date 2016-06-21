@@ -305,7 +305,7 @@ int mongodb_collection_delete(lua_State *L)
 		bson_t* query = createBSONFromLuaTable(L);
 		if (query != NULL)
 		{
-			if (!mongoc_collection_remove(ptr->coll, MONGOC_REMOVE_SINGLE_REMOVE, query, NULL, &error))
+			if (!mongoc_collection_remove(ptr->coll, MONGOC_REMOVE_NONE, query, NULL, &error))
 			{
 				fprintf(stderr, "Delete failed: %s\n", error.message);
 				lua_pushboolean(L, 0);
