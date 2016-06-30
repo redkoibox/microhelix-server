@@ -1,6 +1,10 @@
 #include <iostream>
 #include <sstream>
 
+#ifdef _WIN32
+#include <openssl/applink.c>
+#endif
+
 #include "microhelix_commons.h"
 #include "config_manager.h"
 #include "network.h"
