@@ -1,8 +1,35 @@
 image: docker-repo.iseocom.it:5000/microhelix-compile:latest
 
 cmake:
+  stage: build
   script:
     - mkdir -p build
     - cd build
     - LUA_DIR=/usr/local cmake -G "Unix Makefiles" -DLIBBSON_DIR=/usr/local -DLIBMONGOC_DIR=/usr/local -DCMAKE_INSTALL_PREFIX=/var/lib/builds/microhelix/tmp -DMICROHELIX_INSTALL_DIR=/usr/local ../
     - make install
+	- cp /usr/local/lib/liblua.so.5.3.3 /var/lib/builds/microhelix/tmp/microhelix/libs/liblua.so.5.3
+	- rm -f /var/lib/builds/microhelix/tmp/microhelix/libs/*.so.*
+	- cp /usr/local/lib/libboost_context.so.1.61.0 /var/lib/builds/microhelix/tmp/microhelix/libs/libboost_context.so.1.61.0
+	- cp /usr/local/lib/libboost_coroutine.so.1.61.0 /var/lib/builds/microhelix/tmp/microhelix/libs/libboost_coroutine.so.1.61.0
+	- cp /usr/local/lib/libboost_regex.so.1.61.0 /var/lib/builds/microhelix/tmp/microhelix/libs/libboost_regex.so.1.61.0
+	- cp /usr/local/lib/libboost_system.so.1.61.0 /var/lib/builds/microhelix/tmp/microhelix/libs/libboost_system.so.1.61.0
+	- cp /usr/local/lib/libboost_thread.so.1.61.0 /var/lib/builds/microhelix/tmp/microhelix/libs/libboost_thread.so.1.61.0
+	- cp /usr/local/lib/libbson-1.0.so.0 /var/lib/builds/microhelix/tmp/microhelix/libs/libbson-1.0.so.0
+	- cp /usr/local/lib/libmongoc-1.0.so.0 /var/lib/builds/microhelix/tmp/microhelix/libs/libmongoc-1.0.so.0
+	- cp /usr/lib/x86_64-linux-gnu/libssl.so /var/lib/builds/microhelix/tmp/microhelix/libs/libssl.so
+	- cp /usr/lib/x86_64-linux-gnu/libcrypto.so /var/lib/builds/microhelix/tmp/microhelix/libs/libcrypto.so
+	- cp /usr/lib/x86_64-linux-gnu/libm.so /var/lib/builds/microhelix/tmp/microhelix/libs/libm.so
+	libboost_coroutine.so.1.61.0
+	- cd /var/lib/builds/microhelix/tmp/
+	- tar czvf microhelix.tar.gz ./microhelix
+
+docker-image:
+  stage: deploy
+  script:
+    - ME_VERSION=$(cat version.txt)
+	- cp /var/lib/builds/microhelix/tmp/microhelix.tar.gz ./docker/microhelix.tar.gz
+    - cd ./docker
+	- docker build -t docker-repo.iseocom.it:5000/microhelix:$ME_VERSION .
+	- docker tag docker-repo.iseocom.it:5000/microhelix:$ME_VERSION docker-repo.iseocom.it:5000/microhelix:latest
+	- docker push docker-repo.iseocom.it:5000/microhelix:$ME_VERSION
+	- docker push docker-repo.iseocom.it:5000/microhelix:latest
