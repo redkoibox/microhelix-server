@@ -21,13 +21,9 @@ cmake:
     - cp /usr/lib/x86_64-linux-gnu/libm.so /var/lib/builds/microhelix/tmp/microhelix/libs/libm.so
     - cd /var/lib/builds/microhelix/tmp/
     - tar czvf microhelix.tar.gz ./microhelix
-
-docker-image:
-  stage: deploy
-  script:
-    - ME_VERSION=$(cat version.txt)
-    - cp /var/lib/builds/microhelix/tmp/microhelix.tar.gz ./docker/microhelix.tar.gz
-    - cd ./docker
+    - cd /builds/micro-helix/microhelix-server/docker
+	- ME_VERSION=$(cat version.txt)
+    - cp /var/lib/builds/microhelix/tmp/microhelix.tar.gz ./microhelix.tar.gz
     - docker build -t docker-repo.iseocom.it:5000/microhelix:$ME_VERSION .
     - docker tag docker-repo.iseocom.it:5000/microhelix:$ME_VERSION docker-repo.iseocom.it:5000/microhelix:latest
     - docker push docker-repo.iseocom.it:5000/microhelix:$ME_VERSION
