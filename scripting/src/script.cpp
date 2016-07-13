@@ -12,6 +12,12 @@ static const struct luaL_Reg helixlib_f[] =
 	{ NULL, NULL }
 };
 
+static const struct luaL_Reg helix_utils_json_f[] =
+{
+	{ "parse", Helix_utils_json_parse },
+	{ NULL, NULL }
+};
+
 static int traceback(lua_State *L)
 {
 	if (!lua_isstring(L, 1))  /* 'message' not a string? */
@@ -112,6 +118,17 @@ int Helix_script(lua_State *L)
 	if (lua_gettop(L) > 0 && lua_isstring(L, 1))
 	{
 		lua_pushvalue(L, 1);
+		return 1;
+	}
+	lua_pushnil(L);
+	return 1;
+}
+
+int Helix_utils_json_parse(lua_State *L)
+{
+	if (lua_gettop(L) > 0 && lua_isstring(L, 1))
+	{
+		http_helpers::jsonToLuaTable(L, luaL_checkstring(L, 1));
 		return 1;
 	}
 	lua_pushnil(L);
@@ -234,6 +251,14 @@ void Script::createDefaultScriptObjects(lua_State *L)
 
 	lua_pushinteger(L, static_cast<lua_Integer>(http_helpers::SupportedMediaTypes::JSON));
 	lua_setfield(L, -2, "JSON");
+
+	lua_newtable(L);
+
+	lua_newtable(L);
+	luaL_setfuncs(L, helix_utils_json_f, 0);
+	lua_setfield(L, -2, "json");
+
+	lua_setfield(L, -2, "utils");
 
 	lua_newtable(L);
 	

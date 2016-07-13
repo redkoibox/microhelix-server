@@ -16,6 +16,7 @@ struct lua_State;
 int Helix_success(lua_State *L);
 int Helix_error(lua_State *L);
 int Helix_script(lua_State *L);
+int Helix_utils_json_parse(lua_State *L);
 
 class Script 
 	: public std::enable_shared_from_this<Script>
