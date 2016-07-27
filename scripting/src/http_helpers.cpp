@@ -157,16 +157,20 @@ void serializeTable(rapidjson::Writer<rapidjson::StringBuffer>& writer, lua_Stat
 			writer.String(luaL_checkstring(L, -2));
 		}
 
+		int type = lua_type(L, -1);
 		// Write value.
-		if (lua_isinteger(L, -1))
-			writer.Int64(lua_tointeger(L, -1));
-		else if (lua_isnumber(L, -1))
-			writer.Double(lua_tonumber(L, -1));
-		else if (lua_isstring(L, -1))
+		if (type == LUA_TNUMBER)
+		{
+			if(lua_isinteger(L, -1))
+				writer.Int64(lua_tointeger(L, -1));
+			else
+				writer.Double(lua_tonumber(L, -1));
+		}
+		else if (type == LUA_TSTRING)
 			writer.String(lua_tostring(L, -1));
-		else if (lua_isboolean(L, -1))
+		else if (type == LUA_TBOOLEAN)
 			writer.Bool(lua_toboolean(L, -1) == 1);
-		else if (lua_istable(L, -1))
+		else if (type == LUA_TTABLE)
 			serializeTable(writer, L);
 
 		lua_pop(L, 1);
