@@ -18,6 +18,8 @@
 
 int mongodb_newpool(lua_State *L);
 int mongodb_destroypool(lua_State *L);
+int mongodb_pool_set_min_connections(lua_State *L);
+int mongodb_pool_set_max_connections(lua_State *L);
 int mongodb_pool_get_connection(lua_State *L);
 int mongodb_pool_release_connection(lua_State *L);
 int mongodb_client_get_collection(lua_State *L);

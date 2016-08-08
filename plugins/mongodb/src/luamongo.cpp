@@ -58,6 +58,9 @@ static const struct luaL_Reg mongodblib_f[] =
 static const struct luaL_Reg mongodblib_pool_m[] =
 {
 	{ "__gc", mongodb_destroypool },
+	{ "setMaxConnections", mongodb_pool_set_max_connections },
+	{ "setMinConnections", mongodb_pool_set_min_connections },
+	{ "getConnection", mongodb_pool_get_connection },
 	{ "getConnection", mongodb_pool_get_connection },
 	{ "releaseConnection", mongodb_pool_release_connection },
 	{ NULL, NULL }
@@ -115,6 +118,38 @@ int mongodb_destroypool(lua_State *L)
 		ptr->pool = NULL;
 		ptr->uri = NULL;
 	}
+	return 0;
+}
+
+int mongodb_pool_set_min_connections(lua_State *L)
+{
+	if (lua_gettop(L) == 2)
+	{
+		lp_mongo_c_pool_userdata ptr = checkmongopool(L);
+		if (ptr != NULL)
+		{
+			mongoc_client_pool_min_size(ptr->pool, luaL_checkinteger(L, 2));
+			return 0;
+		}
+	}
+	else
+		luaL_error(L, "MongoDB-pool setMaxConnections(pool, min) expects 2 parameters (pool and min number).");
+	return 0;
+}
+
+int mongodb_pool_set_max_connections(lua_State *L)
+{
+	if (lua_gettop(L) == 2)
+	{
+		lp_mongo_c_pool_userdata ptr = checkmongopool(L);
+		if (ptr != NULL)
+		{
+			mongoc_client_pool_max_size(ptr->pool, luaL_checkinteger(L, 2));
+			return 0;
+		}
+	}
+	else
+		luaL_error(L, "MongoDB-pool setMaxConnections(pool, max) expects 2 parameters (pool and max number).");
 	return 0;
 }
 
@@ -399,6 +434,7 @@ void MongoPoolManager::releasePool(mongoc_uri_t *uri)
 		it->second.numRef -= 1;
 		if (it->second.numRef == 0)
 		{
+			std::cerr << "[MDB] Releasing pool!" << std::endl;
 			mongoc_client_pool_destroy(it->second.pool);
 			mongoc_uri_destroy(it->second.uri);
 		}
