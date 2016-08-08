@@ -58,8 +58,8 @@ static const struct luaL_Reg mongodblib_f[] =
 static const struct luaL_Reg mongodblib_pool_m[] =
 {
 	{ "__gc", mongodb_destroypool },
-	{ "setMaxConnections", mongodb_pool_set_max_connections },
-	{ "setMinConnections", mongodb_pool_set_min_connections },
+	{ "setMaxCreableConnections", mongodb_pool_set_max_connections },
+	{ "setMaxIdleConnections", mongodb_pool_set_min_connections },
 	{ "getConnection", mongodb_pool_get_connection },
 	{ "releaseConnection", mongodb_pool_release_connection },
 	{ NULL, NULL }
@@ -415,14 +415,12 @@ MongoPoolData const& MongoPoolManager::getPoolForUri(const char *uri)
 	auto it = pools.find(uri);
 	if (it != pools.end())
 	{
-		//std::cout << "Using existing pool" << it->second.pool << std::endl;
 		it->second.numRef += 1;
 		return it->second;
 	}
 	mongoc_uri_t *uri_t = mongoc_uri_new(uri);
 	mongoc_client_pool_t *pool = mongoc_client_pool_new(uri_t);
 	pools.emplace(std::make_pair(mongoc_uri_get_string(uri_t), MongoPoolData(pool, uri_t)));
-	std::cout << "Creating new pool" << it->second.pool << std::endl;
 	return pools.at(mongoc_uri_get_string(uri_t));
 }
 
@@ -435,7 +433,6 @@ void MongoPoolManager::releasePool(mongoc_uri_t *uri)
 		it->second.numRef -= 1;
 		if (it->second.numRef == 0)
 		{
-			//std::cerr << "[MDB] Releasing pool!" << std::endl;
 			mongoc_client_pool_destroy(it->second.pool);
 			mongoc_uri_destroy(it->second.uri);
 		}

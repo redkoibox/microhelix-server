@@ -8,8 +8,8 @@ function create()
 	
 	wrapper.new = function(uri)
 		local pool = mongodb.newPool(uri);
-		pool:setMinConnections(1);
-		pool:setMaxConnections(10);
+		pool:setMaxIdleConnections(15);
+		pool:setMaxCreableConnections(20);
 		return setmetatable({ _pool = pool }, _libmongo_mt);
 	end
 	
