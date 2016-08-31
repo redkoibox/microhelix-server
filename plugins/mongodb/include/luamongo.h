@@ -26,6 +26,7 @@ int mongodb_client_get_collection(lua_State *L);
 int mongodb_collection_close(lua_State *L);
 int mongodb_collection_insert(lua_State *L);
 int mongodb_collection_find(lua_State *L);
+int mongodb_collection_count(lua_State *L);
 int mongodb_collection_delete(lua_State *L);
 int mongodb_collection_update(lua_State *L);
 int mongodb_collection_aggregate(lua_State *L);
