@@ -7,7 +7,10 @@ function create()
 	local wrapper = {};
 	
 	wrapper.new = function(uri)
-		return setmetatable({ _pool = mongodb.newPool(uri) }, _libmongo_mt);
+		local pool = mongodb.newPool(uri);
+		pool:setMaxIdleConnections(15);
+		pool:setMaxCreableConnections(20);
+		return setmetatable({ _pool = pool }, _libmongo_mt);
 	end
 	
 	wrapper.randomUUID = function()

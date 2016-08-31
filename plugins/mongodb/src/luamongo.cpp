@@ -42,6 +42,7 @@ static const struct luaL_Reg mongodblib_collection_m[] =
 	{ "close", mongodb_collection_close },
 	{ "insert", mongodb_collection_insert },
 	{ "find", mongodb_collection_find },
+	{ "count", mongodb_collection_count },
 	{ "delete", mongodb_collection_delete },
 	{ "update", mongodb_collection_update },
 	{ "aggregate", mongodb_collection_aggregate },
@@ -58,6 +59,8 @@ static const struct luaL_Reg mongodblib_f[] =
 static const struct luaL_Reg mongodblib_pool_m[] =
 {
 	{ "__gc", mongodb_destroypool },
+	{ "setMaxCreableConnections", mongodb_pool_set_max_connections },
+	{ "setMaxIdleConnections", mongodb_pool_set_min_connections },
 	{ "getConnection", mongodb_pool_get_connection },
 	{ "releaseConnection", mongodb_pool_release_connection },
 	{ NULL, NULL }
@@ -115,6 +118,38 @@ int mongodb_destroypool(lua_State *L)
 		ptr->pool = NULL;
 		ptr->uri = NULL;
 	}
+	return 0;
+}
+
+int mongodb_pool_set_min_connections(lua_State *L)
+{
+	if (lua_gettop(L) == 2)
+	{
+		lp_mongo_c_pool_userdata ptr = checkmongopool(L);
+		if (ptr != NULL)
+		{
+			mongoc_client_pool_min_size(ptr->pool, luaL_checkinteger(L, 2));
+			return 0;
+		}
+	}
+	else
+		luaL_error(L, "MongoDB-pool setMaxConnections(pool, min) expects 2 parameters (pool and min number).");
+	return 0;
+}
+
+int mongodb_pool_set_max_connections(lua_State *L)
+{
+	if (lua_gettop(L) == 2)
+	{
+		lp_mongo_c_pool_userdata ptr = checkmongopool(L);
+		if (ptr != NULL)
+		{
+			mongoc_client_pool_max_size(ptr->pool, luaL_checkinteger(L, 2));
+			return 0;
+		}
+	}
+	else
+		luaL_error(L, "MongoDB-pool setMaxConnections(pool, max) expects 2 parameters (pool and max number).");
 	return 0;
 }
 
@@ -226,15 +261,21 @@ int mongodb_collection_find(lua_State *L)
 {
 	if (lua_gettop(L) >= 2)
 	{
+		uint32_t skip = 0;
+		uint32_t limit = 0;
 		lp_mongo_c_collection_userdata ptr = checkmongocollection(L);
-		bson_t* query = createBSONFromLuaTable(L);
+		bson_t* query = createBSONFromLuaTable(L, 2);
+		if (lua_gettop(L) >= 3)
+			skip = luaL_checkinteger(L, 3);
+		if (lua_gettop(L) >= 4)
+			limit = luaL_checkinteger(L, 4);
 		if (query != NULL)
 		{
 			mongoc_cursor_t *cursor;
 			const bson_t *doc;
 			char *str;
 			lua_Integer idx = 1;
-			cursor = mongoc_collection_find(ptr->coll, MONGOC_QUERY_NONE, 0, 0, 0, query, NULL, NULL);
+			cursor = mongoc_collection_find(ptr->coll, MONGOC_QUERY_NONE, skip, limit, 0, query, NULL, NULL);
 			lua_newtable(L);
 			while (mongoc_cursor_next(cursor, &doc))
 			{
@@ -256,6 +297,36 @@ int mongodb_collection_find(lua_State *L)
 	}
 	else
 		luaL_error(L, "MongoDB-collection find(collection, document) expects 2 parameter (collection, document).");
+	return 0;
+}
+
+int mongodb_collection_count(lua_State *L)
+{
+	if (lua_gettop(L) >= 2)
+	{
+		uint32_t skip = 0;
+		uint32_t limit = 0;
+		lp_mongo_c_collection_userdata ptr = checkmongocollection(L);
+		bson_t* query = createBSONFromLuaTable(L, 2);
+		if (lua_gettop(L) >= 3)
+			skip = luaL_checkinteger(L, 3);
+		if (lua_gettop(L) >= 4)
+			limit = luaL_checkinteger(L, 4);
+		if (query != NULL)
+		{
+			lua_pushinteger(L, mongoc_collection_count(ptr->coll, MONGOC_QUERY_NONE, query, skip, limit, NULL, NULL));
+			bson_destroy(query);
+			return 1;
+		}
+		else
+		{
+			lua_pushnil(L);
+			lua_pushstring(L, "Invalid BSON object (maybe oid is not in correct form?).");
+			return 2;
+		}
+	}
+	else
+		luaL_error(L, "MongoDB-collection count(collection, document) expects 2 parameter (collection, document).");
 	return 0;
 }
 
