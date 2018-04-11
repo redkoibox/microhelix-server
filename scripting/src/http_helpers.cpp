@@ -91,36 +91,36 @@ static std::map<lua_Integer, std::string> errorCodeToDescription{
 	std::make_pair(509, "509 Bandwidth Limit Exceeded\r\n")
 };
 
-void http_helpers::sendGenericError(NetworkManager::WebServer::Response& response)
+void http_helpers::sendGenericError(std::shared_ptr<NetworkManager::WebServer::Response> response)
 {
-	response << httpProtocolAndVersion << errorCodeToDescription[500];
-	response << "X-Powered-By: micro-helix/0.1\r\n";
-	response << "Content-Length: 0\r\n\r\n";
-	response.flush();
+	*response << httpProtocolAndVersion << errorCodeToDescription[500];
+	*response << "X-Powered-By: micro-helix/0.1\r\n";
+	*response << "Content-Length: 0\r\n\r\n";
+	response->flush();
 }
 
-void http_helpers::sendResponse(NetworkManager::WebServer::Response& response, lua_Integer errorCode, std::string const& content, SupportedMediaTypes mediaType)
+void http_helpers::sendResponse(std::shared_ptr<NetworkManager::WebServer::Response> response, lua_Integer errorCode, std::string const& content, SupportedMediaTypes mediaType)
 {
-	response << httpProtocolAndVersion << errorCodeToDescription[errorCode];
-	response << "X-Powered-By: micro-helix/0.1\r\n";
-	response << "Content-Type: ";
+	*response << httpProtocolAndVersion << errorCodeToDescription[errorCode];
+	*response << "X-Powered-By: micro-helix/0.1\r\n";
+	*response << "Content-Type: ";
 	switch (mediaType)
 	{
 	case http_helpers::SupportedMediaTypes::TEXT_PLAIN:
-		response << " text/plain";
+		*response << " text/plain";
 		break;
 	case http_helpers::SupportedMediaTypes::JSON:
-		response << " application/json";
+		*response << " application/json";
 		break;
 	default:
-		response << "text/plain";
+		*response << "text/plain";
 		break;
 	}
-	response << "\r\n";
-	response << "Content-Length: " << content.length() << "\r\n\r\n";
-	response.flush();
-	response << content;
-	response.flush();
+	*response << "\r\n";
+	*response << "Content-Length: " << content.length() << "\r\n\r\n";
+	response->flush();
+	*response << content;
+	response->flush();
 }
 
 bool isTableArray(lua_State *L)

@@ -14,8 +14,8 @@ namespace http_helpers
 		NONE
 	};
 
-	void sendGenericError(NetworkManager::WebServer::Response& response);
-	void sendResponse(NetworkManager::WebServer::Response& response, lua_Integer errorCode, std::string const& content, SupportedMediaTypes mediaType);
+	void sendGenericError(std::shared_ptr<NetworkManager::WebServer::Response> response);
+	void sendResponse(std::shared_ptr<NetworkManager::WebServer::Response> response, lua_Integer errorCode, std::string const& content, SupportedMediaTypes mediaType);
 	std::string luaTableToJson(lua_State* L, int index);
 	bool jsonToLuaTable(lua_State *L, const char* json);
 }

@@ -27,7 +27,7 @@ public:
 	void init(unsigned short port, size_t numThread);
 	static std::string getMethodString(HTTP_METHOD method);
 	static HTTP_METHOD getMethod(const char* mehodString);
-	void registerPath(HTTP_METHOD method, std::string const& path, std::function<void(WebServer::Response&, std::shared_ptr<WebServer::Request>)> op);
+	void registerPath(HTTP_METHOD method, std::string const& path, std::function<void(std::shared_ptr<WebServer::Response>, std::shared_ptr<WebServer::Request>)> op);
 	void run(bool shouldRunInBackground = false);
 private:
 	WebServerPtr webServer;

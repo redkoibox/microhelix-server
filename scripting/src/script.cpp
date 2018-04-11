@@ -337,7 +337,7 @@ void Script::registerMethod(const char* service, NetworkManager::HTTP_METHOD met
 		lua_pop(L, 1);
 		preloadScripts(numThreads, service, helixScriptFile, method);
 		NetworkManager::get_mutable_instance().registerPath(method, service, 
-			[service = std::string(service), ptr = shared_from_this(), helixScriptFile, consumes, produces, servicePath, method](NetworkManager::WebServer::Response& response, std::shared_ptr<NetworkManager::WebServer::Request> request)
+			[service = std::string(service), ptr = shared_from_this(), helixScriptFile, consumes, produces, servicePath, method](std::shared_ptr<NetworkManager::WebServer::Response> response, std::shared_ptr<NetworkManager::WebServer::Request> request)
 			{
 				// DONE pass headers to function.
 				// DONE pass query parameters to function (passed via regex matches, is up to lua script to match and parse).

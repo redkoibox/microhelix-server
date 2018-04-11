@@ -38,7 +38,7 @@ NetworkManager::HTTP_METHOD NetworkManager::getMethod(const char* mehodString)
 	return NetworkManager::HTTP_METHOD::kNONE;
 }
 
-void NetworkManager::registerPath(HTTP_METHOD method, std::string const& path, std::function<void(WebServer::Response&, std::shared_ptr<WebServer::Request>)> op)
+void NetworkManager::registerPath(HTTP_METHOD method, std::string const& path, std::function<void(std::shared_ptr<WebServer::Response>, std::shared_ptr<WebServer::Request>)> op)
 {
 	webServer->resource[path][getMethodString(method)] = op;
 }
@@ -55,13 +55,13 @@ void NetworkManager::run(bool shouldRunInBackground)
 void NetworkManager::init(unsigned short port, size_t numThread)
 {
 	webServer = std::make_shared<WebServer>(port, numThread);
-	webServer->default_resource["GET"] = [](WebServer::Response& response, std::shared_ptr<WebServer::Request>) 
+	webServer->default_resource["GET"] = [](std::shared_ptr<WebServer::Response> response, std::shared_ptr<WebServer::Request>)
 	{
 		static std::string httpProtocolAndVersion = "HTTP/1.1 ";
 		static std::string content = "<h1>404 - Not Found</h1><hr /><i>Powered by micro~helix.</i>";
-		response << httpProtocolAndVersion << "404 Not Found\r\n";
-		response << "X-Powered-By: micro-helix/0.1\r\n";
-		response << "Content-Length: " << content.size() << "\r\n\r\n" << content;
-		response.flush();
+		*response << httpProtocolAndVersion << "404 Not Found\r\n";
+		*response << "X-Powered-By: micro-helix/0.1\r\n";
+		*response << "Content-Length: " << content.size() << "\r\n\r\n" << content;
+		response->flush();
 	};
 }

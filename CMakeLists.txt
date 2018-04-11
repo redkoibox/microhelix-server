@@ -25,7 +25,7 @@ set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 
-find_package(Boost 1.60.0 COMPONENTS regex system thread coroutine context filesystem date_time REQUIRED) 
+find_package(Boost 1.66.0 COMPONENTS regex system thread coroutine context filesystem date_time REQUIRED) 
 include_directories(${Boost_INCLUDE_DIRS})
 
 find_package(OpenSSL)
