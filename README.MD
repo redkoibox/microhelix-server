@@ -1,19 +1,3 @@
-<style>
-.warning {
-    padding: 20px;
-    background-color: #ff9800;
-    color: white;
-    margin-bottom: 15px;
-	border-radius: 10px;
-}
-
-div.justified {
-	max-width: 800px;
-	text-align: justify;
-	text-justify: inter-word;
-}
-</style>
-
 # **Micro~Helix - Micro services in Lua**
 
 Micro~Helix is an open source (MIT license) multi platform (Windows, Linux) micro service server written in modern C++ (C++14) and scriptable with Lua.
@@ -69,11 +53,9 @@ Micro~Helix includes the following header-only libraries (in the extra directory
 
 ### **1. Service Mapping**
 
-<div class="justified">
 Before we can start to create our simple first service we need to focus on some core concepts on how Micro~Helix is designed.
-The main entry point for a service is the <b>service.lua</b> script file. In this file you should list all the services you want to expose.<br/></br>
+The main entry point for a service is the <b>service.lua</b> script file. In this file you should list all the services you want to expose.  
 Take a look at this sample file:
-</div>
 
 ```lua
 -- Setup CORS settings.
@@ -126,15 +108,13 @@ services["^\\/mygame\\/boosters\\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 	}
 }
 ```
-<div class="justified">
 The first thing done in this script is to setup the CORS settings for a backoffice login service (exposed via POST).
 CORS is set up creating a table in which all strings entry should define a remote URL allowed to make request to the 
-specified resources. For each URL entry you can specify methods, heades and access control max age.</br></br>
+specified resources. For each URL entry you can specify methods, heades and access control max age.  
 After CORS setup the scripts starts to define a list of services adding string entries in the C++ defined services table.
 The string entry value should represent a regex (C++11 standard library regex format) and should represent the endpoint path 
 relative to the server root. To define handled method you should add one entry for each supported method (GET, POST, PUT, DELETE, 
 HEAD, OPTIONS) you want to implement.
-</div>
 
 Each entry must evaluate to a lua table containing three string entries:
 
@@ -156,16 +136,12 @@ Valid values are:
 2. **Helix.JSON**  
   Return value **must** be a lua table that is automatically converted to a json string written to the body response.
 
-<div class="justified">
-The onRequest entry <b>must</b> be assigned with the result of the <i>Helix.script</i> function. The Helix.script function expects one string parameter 
-representing the sub-folder relative to the service.lua file where the scripts for implemented HTTP methods are located. 
+The onRequest entry **must** be assigned with the result of the *Helix.script* function. The Helix.script function expects one string parameter representing the sub-folder relative to the service.lua file where the scripts for implemented HTTP methods are located.  
 The scripts in the folder should be named after the HTTP method they implement (e.g. GET => GET.lua, POST => POST.lua).
-</div>
-</br>
-<div class="warning justified">
-	<span style="background-color: #FFB800;width: 100%;text-align: center; display: block;"><b style="color: red;">WARNING</b></span></br>
-	The HTTP method script file are case sensitive, so the method name should be uppercase and the file extension lowercase!
-</div>
+
+**WARNING**  
+The HTTP method script file are case sensitive, so the method name should be uppercase and the file extension lowercase!
+
 
 ### **2. Service Implementation**
 
@@ -210,12 +186,10 @@ function onRequest(headers, matches, body)
 end
 ```
 
-<div class="justified">
 The example above implements a simple login service that uses mongodb (throught the microhelix core plugin) to store login and session informations. 
-The session manager is a simple object (implemented using lua metatable system) that create and validate sessions with simple expiration logic. 
-As explained in the <b>Service Mapping</b> section the onRequest method is the service entry point called by the C++ core when a request on a matching 
+The session manager is a simple object (implemented using lua metatable system) that create and validate sessions with simple expiration logic.  
+As explained in the **Service Mapping** section the onRequest method is the service entry point called by the C++ core when a request on a matching 
 endpoint and method is made.
-</div>
 
 The onRequest methods takes in input the following parameters:
 
@@ -226,10 +200,8 @@ The onRequest methods takes in input the following parameters:
 3. *body*  
   The request body. Can be a string or a lua table depending on the value of the consumes settings of the service endpoint.
 
-<div class="justified">
 The onRequest method can return a string or a lua table depending on what kind of content the services should produce 
 (string for text/plain and lua table for application/json).
-</div>
 
 ### **3. Utility Functions**
 
@@ -237,29 +209,23 @@ The onRequest method can return a string or a lua table depending on what kind o
 Helix.script(scriptDir);
 ```
 
-<div class="justified">
 This function is used in service definitions to define which subfolder should implement a specific HTTP method for the endpoint.
 It's return value should be assigned to onRequest entry of a service endpoint method definition.
-</div>
 
 ```lua
 Helix.success(content);
 ```
 
-<div class="justified">
-This function is used to return a success value from a service endpoint onRequest function implementation.</br>
+This function is used to return a success value from a service endpoint onRequest function implementation.  
 The content parameter can be a string in case a service produces text/plain content or a lua table for application/json.
-</div>
 
 ```lua
 Helix.errors(errorCode, content);
 ```
 
-<div class="justified">
-This function is used to return an error value from a service endpoint onRequest function implementation.</br>
-The errorCode parameter is the HTTP error code to return.</br>
+This function is used to return an error value from a service endpoint onRequest function implementation.  
+The errorCode parameter is the HTTP error code to return.  
 The content parameter can be a string in case a service produces text/plain content or a lua table for application/json.
-</div>
 
 This is a list of hard-coded errors:
 
@@ -273,29 +239,21 @@ This is a list of hard-coded errors:
 Helix.utils.json.parse(string);
 ```
 
-<div class="justified">
-This function converts a string to a lua table.</br>
-The string parameter is the string to convert.</br>
-Returns a lua table mapped from the json string.</br>
-</div>
+This function converts a string to a lua table.  
+The string parameter is the string to convert.  
+Returns a lua table mapped from the json string.  
 
 ## **Micro~Helix Extensions**
 
-<div class="justified">
 Micro~Helix has a set of standard extensions implemented as a combination of native code and lua code. Actually there are three extension implemented.
 A MongoDB library implemented both in C and Lua, an RSA Public Key signature verification library implemented in C (using OpenSSL) and a simple unit testing
 library implemented in Lua (usefull for writing healt check endpoints).
-</div>
 
 ### **1. The MongoDB Library**
 
-<div class="justified">
 The MongoDB library is a wrapper of the mongo native C driver with a Lua layer that adds automatic pool management.
-</div>
 
-<div class="justified">
 The following functions are available for use on connections:
-</div>
 
 ```lua
 --[[
@@ -318,9 +276,7 @@ connection:disconnect()
 connection:getCollection(dbName, collectionName)
 ```
 
-<div class="justified">
 The following functions are available for use on collections:
-</div>
 
 ```lua
 -- Closes the collection
@@ -383,9 +339,7 @@ collection:update(bsonQuery, bsonUpdate)
 collection:aggregate(bsonPipeline)
 ```
 
-<div class="justified">
 The following utility functions are available for use from the mongodb library:
-</div>
 
 ```lua
 -- First thing to do is to import the mongodb library.
@@ -435,10 +389,8 @@ mongodb.withCollections(collections,
 )
 ```
 
-<div class="justified">
-The connection pool system has full multi thread support and is thread safe.</br>
+The connection pool system has full multi thread support and is thread safe.  
 The following lua code shows how to use the library for mongodb interaction:
-</div>
 
 ```lua
 local mongodb = require("libs/mongodb"); -- Imports the wrapper lua library.
@@ -459,14 +411,10 @@ mongodb.withConnection(mongodb.new(config.mongo.connString):connect(),
 
 ### **2. The OpenSSL Public Key Signature Verification Library**
 
-<div class="justified">
 The public key signature verification library is a C extension created to allow a service implemented in microhelix to
 easily verify SHA1 signatures encrypted with a RSA private key.
-</div>
 
-<div class="justified">
 The library exposes an object with the following methods.
-</div>
 
 ```lua
 -- Loads the ssl library
@@ -491,9 +439,7 @@ local success = publicKey:verify(payload, signature)
 --]]
 publicKey:close()
 ```
-<div class="justified">
 The following code shows an example usage of the library to verify an Android in-app purchase receipt.
-</div>
 
 ```lua
 -- Create from the Android app IAP public key.
@@ -515,14 +461,10 @@ end
 
 ### **3. Unit Test Library**
 
-<div class="justified">
 The last library shipped with micro~helix is the unit test library. This library allows to write simple tests
 to check that the written code work as expected. It can be used also to write simple service health endpoints.
-</div>
 
-<div class="justified">
 The library exposes an object with the following methods.
-</div>
 
 ```lua
 -- Loads the unit test library.
@@ -554,9 +496,7 @@ unitTest:registerTest(name,
 unitTest:runTest(name, data)
 ```
 
-<div class="justified">
 The following code is a sample health check script that uses the unit test system to verify that the mongo database is reachable.
-</div>
 
 ```lua
 local UnitTest = require("libs/test");
