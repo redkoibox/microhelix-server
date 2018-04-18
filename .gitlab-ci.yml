@@ -1,4 +1,4 @@
-image: docker-repo.iseocom.it:5000/microhelix-compile:latest
+#image: repo.example.com/microhelix-compile:latest
 
 cmake:
   stage: build
