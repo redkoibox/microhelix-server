@@ -6,4 +6,4 @@ cmake -G "Unix Makefiles" -DLIBBSON_DIR=/usr/local -DLIBMONGOC_DIR=/usr/local -D
 make
 make install
 mkdir compiled
-tar czvf /usr/local/microhelix ./compiled/microhelix.tar.gz
+tar czvf ./compiled/microhelix.tar.gz /usr/local/microhelix
