@@ -11,3 +11,8 @@ jobs:
       - persist_to_workspace:
           root: compiled
           paths: microhelix.tar.gz
+workflows:
+  version: 2
+  compile_and_push:
+    jobs:
+      - compile
