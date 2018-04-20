@@ -1,0 +1,13 @@
+version: 2
+jobs:
+  compile:
+    docker:
+      - image: redkoibox/microhelix-compile
+    steps:
+      - checkout
+      - run:
+          name: Compile Micro~Helix
+          command: ./build-linux.sh
+      - persist_to_workspace:
+          root: compiled
+          paths: microhelix.tar.gz
